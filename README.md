@@ -51,7 +51,10 @@ sudo apt-get -y install g++-multilib
 
 ## 2. Estructura de archivos del servidor
 
-Todo el servidor vive bajo un solo `fs_homepath`. En este caso:
+Todo el servidor vive bajo un solo `fs_homepath`. En el server de referencia
+usado para armar esta guía es esta ruta, pero **podés clonar el repo en
+cualquier carpeta** — `start_libcod.sh` se auto-detecta (sección 4), solo el
+unit de systemd necesita que le escribas la ruta real (sección 5):
 
 ```
 /home/gameserver/1.3/puG/
@@ -158,15 +161,19 @@ configurado, y subí esos archivos a:
 
 ## 4. Script de arranque (`start_libcod.sh`)
 
-`/home/gameserver/1.3/puG/start_libcod.sh`:
+`start_libcod.sh` (en la raíz del repo/carpeta clonada):
 
 ```bash
 #!/bin/bash
 
+# Auto-detect the folder this script lives in, so it works regardless of
+# where the repo was cloned/copied to (no hardcoded path).
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 sv_maxclients="30"
 #fs_game="dtNriflesDM"
-fs_homepath="/home/gameserver/1.3/puG"
-cod="/home/gameserver/1.3/puG/cod2_lnxded"
+fs_homepath="$DIR"
+cod="$DIR/cod2_lnxded"
 com_hunkMegs="256"
 config="server.cfg"
 cracked="1"
@@ -183,11 +190,15 @@ args=\
 "+set fs_basepath \"$fs_homepath\" "\
 "+exec $config"
 
-LD_PRELOAD="/home/gameserver/1.3/puG/libCoD2x.so" $cod $args +set g_gametype sd +map mp_toujane_fix +set rcon_password pug2026! +map_rotate
+LD_PRELOAD="$DIR/libCoD2x.so" $cod $args +set g_gametype sd +map mp_toujane_fix +set rcon_password pug2026! +map_rotate
 ```
 
 Puntos clave:
 
+- **No tiene rutas hardcodeadas**: `DIR` se calcula a partir de la ubicación
+  del propio script (`dirname`), así que corre igual sin importar en qué
+  carpeta clonaste/copiaste el repo — no hay que editar nada acá aunque no
+  uses `/home/gameserver/1.3/puG`.
 - `LD_PRELOAD` es lo que inyecta `libCoD2x.so` en el proceso del server —
   sin esto, zPAM no funciona (usa comandos/cvars extendidos que libcod
   agrega).
@@ -198,10 +209,11 @@ Puntos clave:
 - El mapa/gametype inicial y el `rcon_password` se pasan como argumentos
   extra al final; `+map_rotate` arranca la rotación definida en `server.cfg`.
 
-Dale permisos de ejecución:
+Dale permisos de ejecución (reemplazá la ruta por donde hayas clonado/copiado
+el repo):
 
 ```bash
-chmod +x /home/gameserver/1.3/puG/start_libcod.sh
+chmod +x /ruta/donde/clonaste/el/repo/start_libcod.sh
 ```
 
 ---
@@ -209,6 +221,10 @@ chmod +x /home/gameserver/1.3/puG/start_libcod.sh
 ## 5. Servicio systemd
 
 Para que el server arranque solo al bootear la VM y se reinicie si se cae.
+
+A diferencia de `start_libcod.sh` (que se auto-detecta), el unit de systemd
+sí necesita la ruta absoluta escrita a mano — reemplazá
+`/ruta/donde/clonaste/el/repo` por la ruta real en tu server.
 
 ### 5.1. Crear el archivo de servicio
 
@@ -227,9 +243,9 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/home/gameserver/1.3/puG
+WorkingDirectory=/ruta/donde/clonaste/el/repo
 Nice=-20
-ExecStart=/bin/bash /home/gameserver/1.3/puG/start_libcod.sh
+ExecStart=/bin/bash /ruta/donde/clonaste/el/repo/start_libcod.sh
 Restart=always
 RestartSec=5
 StandardOutput=journal
