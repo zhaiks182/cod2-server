@@ -90,11 +90,12 @@ Notas:
 ## 3. Archivos a preparar: propios del repo vs. copiados por FTP
 
 Para levantar el server necesitás dos grupos de archivos distintos: los
-propios de este repo (binario, mod, mapas, config), que se obtienen con
-`git clone`, y los assets base originales del juego, que tenés que copiar
-aparte desde tu propia instalación de CoD2.
+propios de este repo (binario, mod, mapas, config), que se obtienen
+descargando un `.zip` o con `git clone` (sección 3.1), y los assets base
+originales del juego, que tenés que copiar aparte desde tu propia
+instalación de CoD2 (sección 3.2).
 
-### 3.1. Clonar este repositorio
+### 3.1. Descargar los archivos del setup
 
 Este repo incluye todo lo necesario salvo los assets base del juego:
 
@@ -107,34 +108,45 @@ Este repo incluye todo lo necesario salvo los assets base del juego:
 | `main/zpam408.iwd` | `/home/gameserver/1.3/puG/main/zpam408.iwd` | Mod, con las custom features (sección 7) |
 | `main/zpam_maps_v7.iwd` | `/home/gameserver/1.3/puG/main/zpam_maps_v7.iwd` | Pack de mapas oficial del mod (~178 MB) |
 
-`main/zpam_maps_v7.iwd` pesa más de 100 MB, así que este repo usa
-**[Git LFS](https://git-lfs.com/)** para poder versionarlo. Instalalo antes
-de clonar (una sola vez por máquina):
+Hay dos formas de conseguirlos:
+
+#### Opción A (recomendada): descargar el `.zip` del Release
+
+No necesita git ni Git LFS — es la forma más simple para levantar el server
+una sola vez:
+
+```bash
+wget https://github.com/zhaiks182/cod2-server/releases/latest/download/zpam408-popup-blood.zip
+unzip zpam408-popup-blood.zip -d cod2-server
+```
+
+Eso te deja la carpeta `cod2-server/` con la misma estructura de la
+sección 2 (`cod2_lnxded`, `libCoD2x.so`, `start_libcod.sh`, `main/...`),
+lista para copiar tal cual al server.
+
+#### Opción B: clonar el repo con `git`
+
+Útil si después querés actualizar con `git pull` en vez de volver a
+descargar todo. `main/zpam_maps_v7.iwd` pesa más de 100 MB, así que el repo
+usa **[Git LFS](https://git-lfs.com/)** — instalalo antes de clonar (una
+sola vez por máquina):
 
 ```bash
 # Debian/Ubuntu
 sudo apt-get install git-lfs
 git lfs install
-```
 
-Y luego cloná normalmente — Git LFS baja el contenido real de los `.iwd`
-de forma transparente:
-
-```bash
 git clone https://github.com/zhaiks182/cod2-server.git
 ```
 
-Vas a terminar con la misma estructura de carpetas que en la sección 2
-(`cod2_lnxded`, `libCoD2x.so`, `start_libcod.sh`, `main/...`), lista para
-copiar tal cual al server (por `scp -r`/`rsync`, o clonando directo en el
-server si tiene salida a internet).
-
-> ⚠️ GitHub LFS en cuentas gratuitas tiene cuota de **1 GB de banda por
-> mes**. Como `zpam_maps_v7.iwd` pesa ~178 MB, alcanza para unos 5-6
-> `git clone` por mes antes de que GitHub empiece a rechazar las descargas
-> LFS hasta el mes siguiente (o hasta comprar más cuota). Si esto es un
-> problema, están disponibles como asset de un [Release](../../releases) en
-> un único `.zip`, que no consume esa cuota de LFS.
+> ⚠️ Si te salteás el paso de `git-lfs`, el `clone` "funciona" sin error
+> pero los archivos grandes quedan como punteros de texto de ~130 bytes en
+> vez del contenido real — el server no va a arrancar. Además, GitHub LFS en
+> cuentas gratuitas tiene cuota de **1 GB de banda por mes**: como
+> `zpam_maps_v7.iwd` pesa ~178 MB, alcanza para 5-6 `git clone` antes de que
+> GitHub empiece a rechazar las descargas LFS hasta el mes siguiente. Por
+> eso la Opción A es la recomendada para la mayoría de los casos — no
+> consume esa cuota.
 
 ### 3.2. Archivos que copiás por FTP desde tu instalación de CoD2
 
