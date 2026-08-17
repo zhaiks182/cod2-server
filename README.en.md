@@ -162,11 +162,8 @@ into the server's `main/` folder, **at the same level** as `server.cfg` and
 
 Use an FTP/SFTP client (FileZilla, WinSCP, etc.) pointed at the server's IP,
 connecting over SFTP with the same SSH key/user you already have set up,
-and upload those files to:
-
-```
-/home/gameserver/1.3/puG/main/
-```
+and upload those files into the `main/` folder inside wherever you deployed
+the repo (section 3.1).
 
 ---
 

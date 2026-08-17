@@ -165,11 +165,8 @@ la carpeta `main/` del server, **al mismo nivel** que `server.cfg` y
 
 Usá un cliente FTP/SFTP (FileZilla, WinSCP, etc.) apuntando a la IP del
 server, conectando por SFTP con la misma llave/usuario SSH que ya tengas
-configurado, y subí esos archivos a:
-
-```
-/home/gameserver/1.3/puG/main/
-```
+configurado, y subí esos archivos a la carpeta `main/` dentro de donde
+hayas desplegado el repo (sección 3.1).
 
 ---
 
