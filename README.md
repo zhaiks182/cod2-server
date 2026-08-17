@@ -1,5 +1,7 @@
 # CoD2 Dedicated Server (Linux) — Instalación + Mod ZPAM 4.08 Custom (Score Popup + Blood FX)
 
+*[Read in English](README.en.md)*
+
 Guía completa para levantar un servidor dedicado de **Call of Duty 2** en Linux
 (Ubuntu) usando `cod2_lnxded` + `libcod`, corriendo como servicio systemd, con
 el mod **zPAM 4.08** y dos features custom (score popup + blood FX) agregadas
@@ -99,14 +101,14 @@ instalación de CoD2 (sección 3.2).
 
 Este repo incluye todo lo necesario salvo los assets base del juego:
 
-| Archivo | Ruta en el server | Qué es |
-|---|---|---|
-| `cod2_lnxded` | `/home/gameserver/1.3/puG/cod2_lnxded` | Binario dedicado del server (headless) |
-| `libCoD2x.so` | `/home/gameserver/1.3/puG/libCoD2x.so` | libcod, cargado vía `LD_PRELOAD` (sección 1.2) |
-| `start_libcod.sh` | `/home/gameserver/1.3/puG/start_libcod.sh` | Script de arranque (sección 4) |
-| `main/server.cfg` | `/home/gameserver/1.3/puG/main/server.cfg` | Config propia (gametype, rcon, cvars zPAM) |
-| `main/zpam408.iwd` | `/home/gameserver/1.3/puG/main/zpam408.iwd` | Mod, con las custom features (sección 7) |
-| `main/zpam_maps_v7.iwd` | `/home/gameserver/1.3/puG/main/zpam_maps_v7.iwd` | Pack de mapas oficial del mod (~178 MB) |
+| Archivo | Qué es |
+|---|---|
+| `cod2_lnxded` | Binario dedicado del server (headless) |
+| `libCoD2x.so` | libcod, cargado vía `LD_PRELOAD` (sección 1.2) |
+| `start_libcod.sh` | Script de arranque (sección 4) |
+| `main/server.cfg` | Config propia (gametype, rcon, cvars zPAM) |
+| `main/zpam408.iwd` | Mod, con las custom features (sección 7) |
+| `main/zpam_maps_v7.iwd` | Pack de mapas oficial del mod (~178 MB) |
 
 Hay dos formas de conseguirlos:
 
