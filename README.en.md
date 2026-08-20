@@ -810,3 +810,51 @@ pickBloodPool()
 
 - ✅ `+1` popup on normal kill — working.
 - ✅ Blood on impact (`flesh_hit`) — working.
+
+### 7.5. Automatic demo upload by HWID (2026-08-19)
+
+When an SD match ends (or a player disconnects/closes the game), each player's
+CoD2x client automatically uploads their recorded demo (`.dm_1`) to an external
+panel, with no dependency on any official "match" system (like fpschallenge.eu) —
+players are identified by their HWID (`self getHWID()`), not a login. The panel
+that receives and displays these demos lives in a separate repo (Laravel,
+[cod2-ranking](https://github.com/zhaiks182/cod2-ranking), `cod2.4livepro.com`).
+
+**Upload contract** (reconstructed by reading `src/mss32/demo.cpp` from the public
+`callofduty2x/CoD2x` repo): the server (GSC) tells the client the demo name
+(`cl_demoAutoRecordName`) and the upload URL (`cl_demoAutoRecordUploadUrl`) via
+`setClientCvar2`. The client records and, once recording stops, uploads the raw
+`.dm_1` via `POST` (no multipart, no Content-Type); console `/quit` pauses the
+game's shutdown until a pending upload finishes. All of this is native to CoD2x —
+the mod only has to set the two cvars.
+
+**Two changes in `maps/mp/gametypes/_record.gsc`:**
+
+1. `execRecording()` — previously, the upload URL was only built when an official
+   "match" was activated. Added an `else if (level.gametype == "sd")` branch that
+   builds the URL from `self getHWID()` for the free-pug case (no match activated):
+   ```
+   url = "https://cod2.4livepro.com/api/demos/upload/" + self getHWID() + "/";
+   self setClientCvar2("cl_demoAutoRecordUploadUrl", url);
+   ```
+2. `getSecureString()` — removed `#`, `[`, `]`, `{`, `}` from the allowed charset
+   (used both for the demo's file name and, now, for the upload URL — `#` cuts the
+   URL in half since it's the fragment separator, confirmed live with a player
+   whose clan tag contained `#`, e.g. `DESTINATION#ZHAIK`).
+
+**`server.cfg`:** `scr_recording` was `0` (recording disabled). Changed to `1` —
+without this zPAM never starts recording, regardless of the rest of the code.
+
+> ⚠️ **Known limitation.** Each player's recording only stops and uploads
+> automatically when `_matchinfo.gsc::clear()` detects a large swing in connected
+> player count (`waitForPlayerOrClear()`), or when the player actually disconnects
+> (the client uploads whatever it has recorded before closing). If the same group
+> plays several maps in a row without anyone disconnecting, each new recording (one
+> per map/round, named by `generateDemoName()`) still starts fine, but may not
+> upload until someone eventually disconnects — confirmed live 2026-08-19: 8 demos
+> from 3 different maps all uploaded together only once several players closed the
+> game at the same time. The Laravel panel works around this by categorizing each
+> demo by the map prefix in its name (`_tj`, `_bg`, `_rai`, ...) instead of "the
+> most recent match at upload time" — see `DemoMatchResolver` in the other repo.
+> The mod itself wasn't touched to fix the stop trigger — a deliberate call: not
+> worth it while the panel-side workaround is good enough.

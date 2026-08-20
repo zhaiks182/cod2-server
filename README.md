@@ -812,3 +812,52 @@ pickBloodPool()
 
 - ✅ Popup `+1` por kill normal — funcionando.
 - ✅ Sangre al impactar (`flesh_hit`) — funcionando.
+
+### 7.5. Subida automática de demos por HWID (2026-08-19)
+
+Al terminar una partida SD (o al desconectarse/cerrar el juego), el cliente CoD2x de
+cada jugador sube automáticamente su demo grabado (`.dm_1`) a un panel externo, sin
+depender de ningún sistema de "match" oficial (tipo fpschallenge.eu) — identificando
+al jugador por su HWID (`self getHWID()`), no por un login. El panel que recibe y
+muestra estos demos vive en otro repo (Laravel,
+[cod2-ranking](https://github.com/zhaiks182/cod2-ranking), `cod2.4livepro.com`).
+
+**Contrato de subida** (reconstruido leyendo `src/mss32/demo.cpp` del repo público
+`callofduty2x/CoD2x`): el server (GSC) le indica al cliente el nombre del demo
+(`cl_demoAutoRecordName`) y la URL de subida (`cl_demoAutoRecordUploadUrl`) vía
+`setClientCvar2`. El cliente graba y, al cortar la grabación, sube el `.dm_1` crudo
+por `POST` (sin multipart, sin Content-Type); `/quit` en consola pausa el cierre del
+juego hasta que termine la subida si hay un upload pendiente. Todo esto es nativo de
+CoD2x — el mod solo tiene que setear los dos cvars.
+
+**Dos cambios en `maps/mp/gametypes/_record.gsc`:**
+
+1. `execRecording()` — antes, la URL de subida solo se armaba si había un "match"
+   oficial activado. Se agregó una rama `else if (level.gametype == "sd")` que arma
+   la URL con `self getHWID()` para el caso de pug libre (sin match activado):
+   ```
+   url = "https://cod2.4livepro.com/api/demos/upload/" + self getHWID() + "/";
+   self setClientCvar2("cl_demoAutoRecordUploadUrl", url);
+   ```
+2. `getSecureString()` — se sacaron `#`, `[`, `]`, `{`, `}` del charset permitido
+   (se usa tanto para el nombre de archivo del demo como para la URL de subida, y
+   `#` corta la URL a la mitad al ser el separador de fragmento — confirmado en vivo
+   con un jugador con `#` en el clan tag, ej. `DESTINATION#ZHAIK`).
+
+**`server.cfg`:** `scr_recording` estaba en `0` (grabación apagada). Se cambió a `1`
+— sin esto zPAM nunca arranca a grabar, sin importar el resto del código.
+
+> ⚠️ **Limitación conocida.** La grabación de cada jugador se corta y sube
+> automáticamente cuando `_matchinfo.gsc::clear()` detecta un cambio grande en la
+> cantidad de jugadores conectados (`waitForPlayerOrClear()`), o cuando el jugador
+> se desconecta de verdad (el cliente sube lo que tenga grabado antes de cerrar). Si
+> el mismo grupo juega varios mapas seguidos sin que nadie se desconecte, cada
+> recording nueva (una por mapa/ronda, nombrada por `generateDemoName()`) arranca
+> bien igual, pero puede tardar en subirse hasta que alguien se desconecte —
+> confirmado en vivo 2026-08-19: 8 demos de 3 mapas distintos se subieron todos
+> juntos recién cuando varios jugadores cerraron el juego a la vez. El panel Laravel
+> compensa esto categorizando cada demo por el prefijo de mapa en su nombre (`_tj`,
+> `_bg`, `_rai`, ...) en vez de por "la partida más reciente al momento de subir" —
+> ver `DemoMatchResolver` en el otro repo. No se tocó el mod para arreglar el
+> trigger de corte en sí — decisión explícita: no vale la pena mientras el
+> workaround del panel alcance.
